@@ -1,11 +1,9 @@
-# src/main.py
 from fastapi import FastAPI
-from src.routers import user_router  # ← импортируем как user_router
+from src.routers import user  # ← импортируем как user (или как назван объект в __init__.py)
 
 app = FastAPI(title="User API", version="1.0")
 
-# Подключаем роутер (передаём сам роутер, а не user_router.router)
-app.include_router(user_router)  # ← убираем .router
+app.include_router(user)  # ← используем user
 
 @app.get("/")
 def root():
