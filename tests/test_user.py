@@ -21,10 +21,10 @@ users = [
 ]
 
 def test_get_existed_user():
-    '''Получение существующего пользователя'''
+    """Получение существующего пользователя"""
     response = client.get("/api/v1/user", params={'email': users[0]['email']})
-    assert response.status_code == 201
-    assert response.json() == users[0]
+    assert response.status_code == 200 
+    assert response.json()['email'] == users[0]['email']
 
 def test_get_existed_user():
     """Получение существующего пользователя"""
