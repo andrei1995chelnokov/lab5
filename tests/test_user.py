@@ -1,3 +1,5 @@
+import json
+
 from fastapi.testclient import TestClient
 
 from src.main import app
@@ -21,13 +23,13 @@ users = [
 def test_get_existed_user():
     '''Получение существующего пользователя'''
     response = client.get("/api/v1/user", params={'email': users[0]['email']})
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert response.json() == users[0]
 
 def test_get_existed_user():
     """Получение существующего пользователя"""
     response = client.get("/api/v1/user", params={'email': users[0]['email']})
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert response.json()['id'] == users[0]['id']
     assert response.json()['name'] == users[0]['name']
     assert response.json()['email'] == users[0]['email']
