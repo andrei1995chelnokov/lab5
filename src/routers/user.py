@@ -1,32 +1,74 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel, EmailStr
+from typing import List, Optional
 
-from src.schemas.user import CreateUser, UserInfo
-from src.fake_db import db
+router = APIRouter(prefix="/api/v1", tags=["users"])
 
-router = APIRouter()
+# Хранилище пользователей (временно, в памяти)
+users_db = [
+    {"id": 1, "name": "Ivan Ivanov", "email": "i.i.ivanov@mail.com"},
+    {"id": 2, "name": "Petr Petrov", "email": "p.p.petrov@mail.com"},
+]
+next_id = 3
 
-@router.get("", status_code=status.HTTP_200_OK, response_model=UserInfo, responses={404: {"detail": "User not found"}})
-async def get_user(email: str):
-    '''Получение пользователя по email'''
-    user = db.get_user_by_email(email)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return UserInfo(
-        id=user['id'],
-        name=user['name'],
-        email=user['email']
-    )
+
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+
+
+@router.get("/user", response_model=UserResponse)
+def get_user(email: str = Query(..., description="Email пользователя")):
+    """Получение пользователя по email"""
+    for user in users_db:
+        if user["email"] == email:
+            return user
+    raise HTTPException(status_code=404, detail=f"User with email '{email}' not found")
+
+
+@router.post("/user", response_model=UserResponse, status_code=201)
+def create_user(user: UserCreate):
+    """Создание нового пользователя"""
+    # Проверяем, существует ли пользователь с таким email
+    for existing_user in users_db:
+        if existing_user["email"] == user.email:
+            raise HTTPException(
+                status_code=409, 
+                detail=f"User with email '{user.email}' already exists"
+            )
     
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=int,
-             responses={409: {"detail": "User with this email already exists"}})
-async def create_user(data: CreateUser):
-    '''Создание пользователя'''
-    if db.get_user_by_email(data.email) is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with this email already exists")
-    db.create_user(data.name, data.email)
-    return db.get_user_by_email(data.email)['id']
+    # Создаём нового пользователя
+    global next_id
+    new_user = {
+        "id": next_id,
+        "name": user.name,
+        "email": user.email
+    }
+    users_db.append(new_user)
+    next_id += 1
+    return new_user
 
-@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(email: str):
-    '''Удаление пользователя'''
-    db.delete_user_by_email(email)
+
+@router.delete("/user")
+def delete_user(email: str = Query(..., description="Email пользователя")):
+    """Удаление пользователя по email"""
+    global users_db
+    for i, user in enumerate(users_db):
+        if user["email"] == email:
+            del users_db[i]
+            return {"message": f"User '{email}' deleted successfully"}
+    
+    raise HTTPException(status_code=404, detail=f"User with email '{email}' not found")
+    
+    @router.post("/login")
+def login(username: str, password: str):
+    """Авторизация (упрощённая версия для тестов)"""
+    if username == "user" and password == "password":
+        return {"access_token": "fake-token", "token_type": "bearer"}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
