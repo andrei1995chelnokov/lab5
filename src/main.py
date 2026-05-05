@@ -1,16 +1,19 @@
-import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Form
+from src.routers import user
 
-from .settings import settings
-from .routers import router
+app = FastAPI(title="User API", version="1.0")
 
-app = FastAPI(debug=False)
-app.include_router(router=router)
+app.include_router(user)
 
-if __name__ == "__main__":
-    uvicorn.run(
-        app=app,
-        host=settings.SERVER_ADDR,
-        port=settings.SERVER_PORT,
-        log_level="info"
-    )
+
+@app.post("/login")
+def login(username: str = Form(...), password: str = Form(...)):
+    """Авторизация (упрощённая версия для тестов)"""
+    if username == "user" and password == "password":
+        return {"access_token": "fake-token", "token_type": "bearer"}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
+
+
+@app.get("/")
+def root():
+    return {"message": "API is working"}

@@ -1,7 +1,7 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings  # Исправлено: pytandict_settings → pydantic_settings
 
 class Settings(BaseSettings):
-    SERVER_ADDR: str = "0.0.0.0"
-    SERVER_PORT: int = 8080
-    
+    class Config:
+        env_file = ".env"
+
 settings = Settings()
