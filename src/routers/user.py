@@ -1,3 +1,4 @@
+# src/routers/user.py
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, EmailStr
 
@@ -34,15 +35,13 @@ def get_user(email: str = Query(..., description="Email пользователя
 @router.post("/user", response_model=UserResponse, status_code=201)
 def create_user(user: UserCreate):
     """Создание нового пользователя"""
-    # Проверяем, существует ли пользователь с таким email
     for existing_user in users_db:
         if existing_user["email"] == user.email:
             raise HTTPException(
                 status_code=409,
                 detail=f"User with email '{user.email}' already exists"
             )
-
-    # Создаём нового пользователя
+    
     global next_id
     new_user = {
         "id": next_id,
@@ -62,10 +61,11 @@ def delete_user(email: str = Query(..., description="Email пользовате�
         if user["email"] == email:
             del users_db[i]
             return {"message": f"User '{email}' deleted successfully"}
-
+    
     raise HTTPException(status_code=404, detail=f"User with email '{email}' not found")
 
 
+# 👇 ДОБАВЬТЕ ЭТОТ МЕТОД
 @router.post("/login")
 def login(username: str, password: str):
     """Авторизация (упрощённая версия для тестов)"""
